@@ -1,0 +1,70 @@
+# Google Cloud Build CI/CD Pipeline: Eval-Gated ADK Deployment to Cloud Run
+#
+# Blocks Cloud Run deployment automatically if any ADK trajectory, rubric,
+# groundedness, or safety metric in `evals/test_config.json` falls below threshold.
+#
+# Submit manually (after validating syntax via `gcloud help builds submit`):
+#   gcloud builds submit --config=cloudbuild.yaml \
+#     --project=YOUR_PROJECT_ID \
+#     --substitutions=_REGION=us-central1,_SERVICE_NAME=refund-ops-agent \
+#     --quiet
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE_NAME: refund-ops-agent
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # Stage 1: Fast deterministic tool invariants & evalset.json schema check (<2s)
+  - id: unit-and-schema-tests
+    name: python:3.11-slim
+    entrypoint: python3
+    args:
+      - -m
+      - unittest
+      - discover
+      - -s
+      - tests
+      - -p
+      - test_tools_unit.py
+      - -v
+
+  # Stage 2: Vertex AI AgentEvaluator Regression Gate (num_runs=2)
+  # Uses Cloud Build's keyless attached Service Account (roles/aiplatform.user)
+  - id: vertex-ai-adk-eval-gate
+    name: python:3.11-slim
+    waitFor:
+      - unit-and-schema-tests
+    env:
+      - GOOGLE_GENAI_USE_VERTEXAI=TRUE
+      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+      - GOOGLE_CLOUD_LOCATION=$_REGION
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        pip install --no-cache-dir -r requirements.txt
+        pytest tests/test_agent_eval.py -v
+
+  # Stage 3: Deploy GREEN-verified ADK Agent to Cloud Run with Cloud Trace enabled
+  - id: deploy-verified-agent-cloud-run
+    name: python:3.11-slim
+    waitFor:
+      - vertex-ai-adk-eval-gate
+    env:
+      - GOOGLE_GENAI_USE_VERTEXAI=TRUE
+      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+      - GOOGLE_CLOUD_LOCATION=$_REGION
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        pip install --no-cache-dir "google-adk>=1.15.0"
+        adk deploy cloud_run \
+          --project="$PROJECT_ID" \
+          --region="$_REGION" \
+          --service_name="$_SERVICE_NAME" \
+          --trace_to_cloud \
+          refund_ops_agent

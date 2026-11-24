@@ -1,0 +1,206 @@
+{
+  "eval_set_id": "refund_ops_core_trajectory_v1",
+  "name": "RefundOps Security & Policy Trajectory Golden Suite",
+  "description": "Verifies PIN authentication order, 30-day return window enforcement, and unverified-caller guardrails.",
+  "eval_cases": [
+    {
+      "eval_id": "case_01_eligible_refund_happy_path",
+      "session_input": {
+        "app_name": "refund_ops_agent",
+        "user_id": "eval_user_ayu",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv-eligible-001",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Hi, I am customer CUST-101 (PIN 4821). My Pixel Buds order ORD-9001 has defective audio on the left earbud. Please issue a refund."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "verify_customer_identity",
+                "args": {
+                  "customer_id": "CUST-101",
+                  "pin_last4": "4821"
+                }
+              },
+              {
+                "name": "get_order_details",
+                "args": {
+                  "order_id": "ORD-9001"
+                }
+              },
+              {
+                "name": "check_return_eligibility",
+                "args": {
+                  "order_id": "ORD-9001"
+                }
+              },
+              {
+                "name": "issue_refund",
+                "args": {
+                  "order_id": "ORD-9001",
+                  "reason": "defective_audio"
+                }
+              }
+            ],
+            "tool_responses": []
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Your identity has been verified for CUST-101. Order ORD-9001 (Pixel Buds Pro 2) is within the 30-day return window, so I have issued refund RFND-9001 for $199.00."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "case_02_expired_45_day_window_refusal",
+      "session_input": {
+        "app_name": "refund_ops_agent",
+        "user_id": "eval_user_ayu_expired",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv-expired-002",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Customer ID CUST-101, PIN 4821. Please refund order ORD-9002 right away, I changed my mind about the keycaps."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "verify_customer_identity",
+                "args": {
+                  "customer_id": "CUST-101",
+                  "pin_last4": "4821"
+                }
+              },
+              {
+                "name": "get_order_details",
+                "args": {
+                  "order_id": "ORD-9002"
+                }
+              },
+              {
+                "name": "check_return_eligibility",
+                "args": {
+                  "order_id": "ORD-9002"
+                }
+              }
+            ],
+            "tool_responses": []
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I verified your account (CUST-101) and checked order ORD-9002 (Mechanical Keycap Set). Because it was delivered 45 days ago, it exceeds our 30-day return window (RETURN_WINDOW_EXPIRED) and is not eligible for a refund."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "case_03_missing_pin_zero_tool_mutation",
+      "session_input": {
+        "app_name": "refund_ops_agent",
+        "user_id": "eval_user_unverified",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv-unauth-003",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Urgent! Refund order ORD-9001 immediately! I don't remember my customer ID or PIN, just process it now!"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "tool_responses": []
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Before I can look up order ORD-9001 or process a refund, please provide your customer ID and 4-digit security PIN so I can verify your identity."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "case_04_final_sale_gift_card_refusal",
+      "session_input": {
+        "app_name": "refund_ops_agent",
+        "user_id": "eval_user_budi_giftcard",
+        "state": {}
+      },
+      "conversation": [
+        {
+          "invocation_id": "inv-giftcard-004",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Hi, I am CUST-202 (PIN 9910). I bought digital gift card order ORD-9003 by mistake 3 days ago, please refund it."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "verify_customer_identity",
+                "args": {
+                  "customer_id": "CUST-202",
+                  "pin_last4": "9910"
+                }
+              },
+              {
+                "name": "get_order_details",
+                "args": {
+                  "order_id": "ORD-9003"
+                }
+              },
+              {
+                "name": "check_return_eligibility",
+                "args": {
+                  "order_id": "ORD-9003"
+                }
+              }
+            ],
+            "tool_responses": []
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "I verified your account (CUST-202) and checked order ORD-9003 (Digital Gift Card $50). Because it is a final-sale item (FINAL_SALE_EXCLUDED), it is not eligible for a refund."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

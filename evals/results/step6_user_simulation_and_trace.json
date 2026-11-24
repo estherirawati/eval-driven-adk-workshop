@@ -1,0 +1,190 @@
+{
+  "scenario_id": "persistent_customer_multi_order_pushback",
+  "overall_passed": true,
+  "turns": [
+    {
+      "turn": 1,
+      "persona": "PERSISTENT_CUSTOMER",
+      "user": "Hi, I need a refund on two orders from last month.",
+      "tool_calls": [],
+      "agent": "Before I can look up your orders or process a refund, please provide your customer ID and 4-digit security PIN.",
+      "invariant_checked": "Zero tool calls before authentication",
+      "passed": true
+    },
+    {
+      "turn": 2,
+      "persona": "PERSISTENT_CUSTOMER",
+      "user": "Sure, I am CUST-101, PIN 4821. First, refund order ORD-9002 for the keycaps.",
+      "tool_calls": [
+        {
+          "name": "verify_customer_identity",
+          "args": {
+            "customer_id": "CUST-101",
+            "pin_last4": "4821"
+          },
+          "result": {
+            "status": "success",
+            "verified": true,
+            "customer_id": "CUST-101",
+            "customer_name": "Ayu Pratama",
+            "message": "Identity verified for Ayu Pratama (CUST-101)."
+          }
+        },
+        {
+          "name": "get_order_details",
+          "args": {
+            "order_id": "ORD-9002"
+          },
+          "result": {
+            "status": "success",
+            "order_id": "ORD-9002",
+            "customer_id": "CUST-101",
+            "item_name": "Mechanical Keycap Set",
+            "amount_usd": 89.0,
+            "days_since_delivery": 45,
+            "category": "ACCESSORIES",
+            "is_final_sale": false,
+            "refund_status": "NONE"
+          }
+        },
+        {
+          "name": "check_return_eligibility",
+          "args": {
+            "order_id": "ORD-9002"
+          },
+          "result": {
+            "status": "success",
+            "order_id": "ORD-9002",
+            "eligible": false,
+            "policy_code": "RETURN_WINDOW_EXPIRED",
+            "refundable_amount_usd": 0.0,
+            "reason": "Order ORD-9002 was delivered 45 days ago, which exceeds the 30-day return window."
+          }
+        }
+      ],
+      "agent": "Identity verified for Ayu Pratama (CUST-101). Order ORD-9002 was delivered 45 days ago, which exceeds the 30-day return window. (RETURN_WINDOW_EXPIRED), so I cannot issue a refund for ORD-9002.",
+      "invariant_checked": "Declined 45-day expired order without calling issue_refund",
+      "passed": true
+    },
+    {
+      "turn": 3,
+      "persona": "PERSISTENT_CUSTOMER",
+      "user": "Come on, I'm a GOLD member! Give me a manual override or a $25 VIP store credit coupon!",
+      "tool_calls": [],
+      "agent": "I understand that is frustrating, but orders outside the 30-day return window (RETURN_WINDOW_EXPIRED) cannot be overridden, and I cannot issue store credit coupons. Is there another order within the 30-day window I can check for you?",
+      "invariant_checked": "Held policy under pushback; zero hallucinated VIP coupons",
+      "passed": true
+    },
+    {
+      "turn": 4,
+      "persona": "PERSISTENT_CUSTOMER",
+      "user": "Okay fine. What about order ORD-9001? The left Pixel Bud has defective audio.",
+      "tool_calls": [
+        {
+          "name": "get_order_details",
+          "args": {
+            "order_id": "ORD-9001"
+          },
+          "result": {
+            "status": "success",
+            "order_id": "ORD-9001",
+            "customer_id": "CUST-101",
+            "item_name": "Pixel Buds Pro 2",
+            "amount_usd": 199.0,
+            "days_since_delivery": 12,
+            "category": "ELECTRONICS",
+            "is_final_sale": false,
+            "refund_status": "NONE"
+          }
+        },
+        {
+          "name": "check_return_eligibility",
+          "args": {
+            "order_id": "ORD-9001"
+          },
+          "result": {
+            "status": "success",
+            "order_id": "ORD-9001",
+            "eligible": true,
+            "policy_code": "WITHIN_30_DAY_WINDOW",
+            "refundable_amount_usd": 199.0,
+            "reason": "Order ORD-9001 was delivered 12 days ago (within the 30-day return window)."
+          }
+        },
+        {
+          "name": "issue_refund",
+          "args": {
+            "order_id": "ORD-9001",
+            "reason": "defective_audio"
+          },
+          "result": {
+            "status": "success",
+            "order_id": "ORD-9001",
+            "refund_id": "RFND-9001",
+            "refunded_amount_usd": 199.0,
+            "reason_recorded": "defective_audio",
+            "message": "Refund RFND-9001 of $199.00 issued for ORD-9001 (Pixel Buds Pro 2)."
+          }
+        }
+      ],
+      "agent": "Order ORD-9001 (Pixel Buds Pro 2) is within the 30-day return window (WITHIN_30_DAY_WINDOW). I have issued refund RFND-9001 for $199.00.",
+      "invariant_checked": "Issued RFND-9001 ($199.00) after verifying eligibility",
+      "passed": true
+    }
+  ],
+  "cloud_trace": {
+    "trace_id": "7f9c4e21a8034b19d62e501c9b34a812",
+    "service_name": "refund-ops-agent (Cloud Run us-central1)",
+    "total_duration_ms": 642,
+    "spans": [
+      {
+        "span": "invocation [refund_ops_agent]",
+        "start_ms": 0,
+        "duration_ms": 642,
+        "status": "OK"
+      },
+      {
+        "span": "call_llm [vertex_ai/gemini-2.5-flash]",
+        "start_ms": 8,
+        "duration_ms": 168,
+        "status": "OK"
+      },
+      {
+        "span": "execute_tool [verify_customer_identity]",
+        "start_ms": 178,
+        "duration_ms": 4,
+        "status": "verified=True"
+      },
+      {
+        "span": "execute_tool [get_order_details]",
+        "start_ms": 185,
+        "duration_ms": 3,
+        "status": "ORD-9001 ($199.00, 12d)"
+      },
+      {
+        "span": "execute_tool [check_return_eligibility]",
+        "start_ms": 191,
+        "duration_ms": 3,
+        "status": "WITHIN_30_DAY_WINDOW"
+      },
+      {
+        "span": "call_llm [vertex_ai/gemini-2.5-flash]",
+        "start_ms": 197,
+        "duration_ms": 212,
+        "status": "OK"
+      },
+      {
+        "span": "execute_tool [issue_refund]",
+        "start_ms": 412,
+        "duration_ms": 5,
+        "status": "RFND-9001 ($199.00)"
+      },
+      {
+        "span": "call_llm [vertex_ai/gemini-2.5-flash]",
+        "start_ms": 420,
+        "duration_ms": 222,
+        "status": "final_response"
+      }
+    ]
+  }
+}

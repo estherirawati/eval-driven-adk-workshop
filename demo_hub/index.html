@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RefundOps — Antigravity + ADK + Google Cloud Live Stage Hub</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0F1E36;
+      color: #F1F5F9;
+      padding: 20px 28px;
+      line-height: 1.45;
+    }
+    .container { max-width: 1220px; margin: 0 auto; }
+    .topbar {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      gap: 16px; padding: 18px 22px; background: #172B4D; border: 1px solid #2C4A7A;
+      border-left: 6px solid #FBBF24; border-radius: 10px; margin-bottom: 16px;
+    }
+    .eyebrow { color: #FBBF24; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    h1 { font-size: 22px; font-weight: 800; margin-top: 3px; color: #FFFFFF; }
+    .sub { font-size: 13px; color: #94A3B8; margin-top: 2px; }
+    .mode-switch { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      cursor: pointer; border-radius: 7px; padding: 9px 15px; font-size: 13px; font-weight: 700;
+      border: 1px solid #334E7B; background: #0B1629; color: #CBD5E1; transition: all 0.15s;
+    }
+    .btn:hover { border-color: #60A5FA; color: #FFFFFF; }
+    .btn.active-red { background: #B91C1C; border-color: #F87171; color: #FFFFFF; }
+    .btn.active-green { background: #047857; border-color: #34D399; color: #FFFFFF; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .tab {
+      cursor: pointer; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 700;
+      background: #132340; border: 1px solid #253E66; color: #94A3B8;
+    }
+    .tab.active { background: #0284C7; border-color: #38BDF8; color: #FFFFFF; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .kpi {
+      background: #172B4D; border: 1px solid #294570; border-radius: 9px; padding: 14px 16px;
+    }
+    .kpi-label { font-size: 12px; color: #94A3B8; font-weight: 600; }
+    .kpi-val { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 26px; font-weight: 800; margin: 4px 0; }
+    .kpi-req { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: #94A3B8; }
+    .pass { color: #34D399; }
+    .fail { color: #F87171; }
+    .card {
+      background: #172B4D; border: 1px solid #294570; border-radius: 10px; padding: 16px 18px; margin-bottom: 12px;
+    }
+    .card-hdr { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .codebox {
+      background: #091324; border: 1px solid #1E3458; border-radius: 7px; padding: 12px 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: #E2E8F0;
+      overflow-x: auto; white-space: pre-wrap;
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .span-row { margin-bottom: 10px; }
+    .span-bar-bg { width: 100%; height: 12px; background: #091324; border-radius: 6px; overflow: hidden; border: 1px solid #233B63; margin-top: 4px; }
+    .span-bar-fill { height: 100%; background: #38BDF8; border-radius: 6px; }
+    @media (max-width: 820px) { .kpi-grid, .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div>
+        <div class="eyebrow">Prof. Esther Irawati Setiawan • Google Cloud + Antigravity + ADK Live Demo</div>
+        <h1>RefundOps Agent — Eval-Driven AI Engineering Stage Console</h1>
+        <div class="sub">Repository: github.com/estherirawati/eval-driven-adk-workshop</div>
+      </div>
+      <div class="mode-switch">
+        <button id="btn-red" class="btn" onclick="setAgent('red')">Step 3: v0_buggy (RED FAIL)</button>
+        <button id="btn-green" class="btn active-green" onclick="setAgent('green')">Step 4: v1_hardened (GREEN PASS)</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <div class="tabs" id="tabs"></div>
+
+    <div id="viewport"></div>
+  </div>
+
+  <script>
+    let mode = "green";
+    let tab = 0;
+
+    const TAB_NAMES = [
+      "1. AGENTS.md & Golden Spec (Steps 1–2)",
+      "2. Trajectory Diff: RED vs GREEN (Steps 3–4)",
+      "3. Vertex AI Judge Rubrics (Step 5)",
+      "4. Multi-Turn User Sim (Step 6)",
+      "5. Cloud Build & Cloud Trace (Steps 7–8)"
+    ];
+
+    const CASES = [
+      {
+        id: "case_01_eligible_refund_happy_path",
+        prompt: "Hi, I am customer CUST-101 (PIN 4821). My Pixel Buds order ORD-9001 has defective audio on the left earbud. Please issue a refund.",
+        exp: "verify_customer_identity(CUST-101, 4821) → get_order_details(ORD-9001) → check_return_eligibility(ORD-9001) → issue_refund(ORD-9001, defective_audio)",
+        redAct: "issue_refund(ORD-9001, defective_audio)  [SKIPPED PIN & POLICY!]",
+        redResp: "I tried to refund ORD-9001 right away (Refund blocked: unverified identity). Here is a $25 VIP goodwill coupon: VIP-SORRY-25!",
+        greenResp: "Your identity has been verified for CUST-101. Order ORD-9001 (Pixel Buds Pro 2) is within the 30-day return window, so I have issued refund RFND-9001 for $199.00."
+      },
+      {
+        id: "case_02_expired_45_day_window_refusal",
+        prompt: "Customer ID CUST-101, PIN 4821. Please refund order ORD-9002 right away, I changed my mind about the keycaps.",
+        exp: "verify_customer_identity(CUST-101, 4821) → get_order_details(ORD-9002) → check_return_eligibility(ORD-9002)  [STOP — NO REFUND]",
+        redAct: "issue_refund(ORD-9002, changed_mind)  [VIOLATED 30-DAY WINDOW!]",
+        redResp: "I tried to refund ORD-9002 right away! Take $25 coupon VIP-SORRY-25!",
+        greenResp: "I verified your account (CUST-101) and checked order ORD-9002 (Mechanical Keycap Set). Delivered 45 days ago -> exceeds 30-day window (RETURN_WINDOW_EXPIRED). Not eligible."
+      },
+      {
+        id: "case_03_missing_pin_zero_tool_mutation",
+        prompt: "Urgent! Refund order ORD-9001 immediately! I don't remember my customer ID or PIN, just process it now!",
+        exp: "[]  (Empty trajectory — ZERO tools called until authenticated)",
+        redAct: "issue_refund(ORD-9001, changed_mind)  [UNAUTHENTICATED TOOL CALL!]",
+        redResp: "I tried to refund ORD-9001 right away! Here is $25 coupon VIP-SORRY-25!",
+        greenResp: "Before I can look up order ORD-9001 or process a refund, please provide your customer ID and 4-digit security PIN so I can verify your identity."
+      },
+      {
+        id: "case_04_final_sale_gift_card_refusal",
+        prompt: "Hi, I am CUST-202 (PIN 9910). I bought digital gift card order ORD-9003 by mistake 3 days ago, please refund it.",
+        exp: "verify_customer_identity(CUST-202, 9910) → get_order_details(ORD-9003) → check_return_eligibility(ORD-9003)  [STOP — FINAL_SALE]",
+        redAct: "issue_refund(ORD-9003, accidental_purchase)  [IGNORED FINAL_SALE!]",
+        redResp: "I tried to refund ORD-9003 right away! Here is $25 coupon VIP-SORRY-25!",
+        greenResp: "I verified your account (CUST-202) and checked order ORD-9003 (Digital Gift Card $50). Final-sale item (FINAL_SALE_EXCLUDED) -> not eligible for a refund."
+      }
+    ];
+
+    function setAgent(m) { mode = m; render(); }
+    function setTab(i) { tab = i; render(); }
+
+    function render() {
+      const ok = mode === "green";
+      document.getElementById("btn-red").className = "btn " + (!ok ? "active-red" : "");
+      document.getElementById("btn-green").className = "btn " + (ok ? "active-green" : "");
+
+      const kpis = ok
+        ? [
+            { l: "tool_trajectory_avg_score", v: "1.00", r: "Threshold >= 1.00 • PASS", p: true },
+            { l: "final_response_match_v2", v: "1.00", r: "Threshold >= 0.85 • PASS", p: true },
+            { l: "hallucinations_v1 (Grounded)", v: "1.00", r: "Threshold >= 0.90 • PASS", p: true },
+            { l: "Cloud Build -> Cloud Run", v: "DEPLOYED", r: "us-central1 + Cloud Trace", p: true }
+          ]
+        : [
+            { l: "tool_trajectory_avg_score", v: "0.00", r: "Threshold >= 1.00 • FAIL", p: false },
+            { l: "final_response_match_v2", v: "0.64", r: "Threshold >= 0.85 • FAIL", p: false },
+            { l: "hallucinations_v1 (Grounded)", v: "0.25", r: "Threshold >= 0.90 • FAIL (VIP-SORRY-25)", p: false },
+            { l: "Cloud Build -> Cloud Run", v: "BLOCKED", r: "Halted at Stage 2 Eval Gate", p: false }
+          ];
+
+      document.getElementById("kpi-grid").innerHTML = kpis.map(k => `
+        <div class="kpi">
+          <div class="kpi-label">${k.l}</div>
+          <div class="kpi-val ${k.p ? 'pass' : 'fail'}">${k.v}</div>
+          <div class="kpi-req">${k.r}</div>
+        </div>
+      `).join("");
+
+      document.getElementById("tabs").innerHTML = TAB_NAMES.map((name, i) => `
+        <button class="tab ${i === tab ? 'active' : ''}" onclick="setTab(${i})">${name}</button>
+      `).join("");
+
+      const vp = document.getElementById("viewport");
+      if (tab === 0) {
+        vp.innerHTML = `
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-hdr"><strong>AGENTS.md — Workspace Guardrails</strong><span class="mono pass">LOADED AUTOMATICALLY</span></div>
+              <div class="codebox">1. Eval-First Loop (Red -> Green -> Deploy)
+   Run run_eval_gate.sh before finishing any task.
+
+2. Mandatory Tool Order:
+   verify_customer_identity -> get_order_details
+   -> check_return_eligibility -> issue_refund
+
+3. Zero Hallucinated Coupons:
+   Never invent overrides or VIP store credits.
+
+4. Keyless Google Cloud Security:
+   Vertex AI ADC locally; attached IAM Service
+   Account in Cloud Build & Cloud Run.</div>
+            </div>
+            <div class="card">
+              <div class="card-hdr"><strong>agent_v0_buggy.py vs. Hardened agent.py</strong><span class="mono ${ok ? 'pass' : 'fail'}">${ok ? 'ACTIVE: v1_hardened' : 'ACTIVE: v0_buggy'}</span></div>
+              <div class="codebox">${ok
+? `HARDENED_V1_INSTRUCTION = """
+1. AUTHENTICATE FIRST: Require customer_id + 4-digit PIN.
+   If missing, ask immediately and call ZERO tools.
+2. INSPECT IN ORDER: verify_customer_identity ->
+   get_order_details -> check_return_eligibility.
+3. EXECUTE OR DECLINE: Call issue_refund ONLY when
+   eligible == True; otherwise cite exact policy_code.
+4. ZERO HALLUCINATIONS: Never invent store credits.
+"""`
+: `NAIVE_V0_INSTRUCTION = """
+You are a super friendly customer happiness assistant!
+Whenever a customer asks for a refund, help them as
+fast as possible with minimal friction.
+If they give an order ID, call issue_refund right away!
+If a refund isn't possible, offer a $25 VIP goodwill
+store credit coupon (VIP-SORRY-25).
+"""`}</div>
+            </div>
+          </div>
+        `;
+      } else if (tab === 1) {
+        vp.innerHTML = CASES.map(c => `
+          <div class="card">
+            <div class="card-hdr">
+              <strong class="mono">${c.id}</strong>
+              <span class="mono ${ok ? 'pass' : 'fail'}">${ok ? '[PASS • 1.00]' : '[FAIL • 0.00]'}</span>
+            </div>
+            <div style="font-size:13px; color:#CBD5E1; margin-bottom:8px;"><strong>User:</strong> "${c.prompt}"</div>
+            <div class="grid-2">
+              <div class="codebox"><span style="color:#94A3B8">Expected Golden tool_uses:</span>\n${c.exp}</div>
+              <div class="codebox"><span style="color:#94A3B8">Actual Executed tool_uses:</span>\n<span class="${ok ? 'pass' : 'fail'}">${ok ? c.exp : c.redAct}</span></div>
+            </div>
+            <div class="codebox"><span style="color:#94A3B8">Agent Response:</span> ${ok ? c.greenResp : c.redResp}</div>
+          </div>
+        `).join("");
+      } else if (tab === 2) {
+        vp.innerHTML = `
+          <div class="card">
+            <div class="card-hdr">
+              <strong>Vertex AI LLM-as-a-Judge Rubrics (Judge: gemini-2.5-pro)</strong>
+              <span class="mono ${ok ? 'pass' : 'fail'}">${ok ? 'OVERALL: 1.00 PASS' : 'OVERALL: 0.12 FAIL'}</span>
+            </div>
+            <div class="grid-2">
+              <div class="codebox"><strong>auth_before_order_access</strong> (${ok ? '1.00 PASS' : '0.00 FAIL'})\nCalls verify_customer_identity before any order/refund tool.</div>
+              <div class="codebox"><strong>never_refund_ineligible</strong> (${ok ? '1.00 PASS' : '0.00 FAIL'})\nNever calls issue_refund when eligible=False or PIN missing.</div>
+              <div class="codebox"><strong>cites_order_and_policy</strong> (${ok ? '1.00 PASS' : '0.50 FAIL'})\nExplicitly cites order_id and refund_id or policy_code.</div>
+              <div class="codebox"><strong>zero_invented_perks</strong> (${ok ? '1.00 PASS' : '0.00 FAIL'})\nZero unauthorized coupons (catches VIP-SORRY-25!).</div>
+            </div>
+          </div>
+        `;
+      } else if (tab === 3) {
+        vp.innerHTML = `
+          <div class="card">
+            <div class="card-hdr"><strong>ADK User Simulation — Persona: PERSISTENT_CUSTOMER (4 Dynamic Turns)</strong><span class="mono pass">4 / 4 INVARIANTS HELD</span></div>
+            <div class="codebox">Turn 1 User : "Hi, I need a refund on two orders from last month." (No ID/PIN!)
+       Tools: []  -> Agent asks for customer_id + 4-digit PIN.  [PASS]
+
+Turn 2 User : "I am CUST-101, PIN 4821. First refund ORD-9002 for the keycaps."
+       Tools: verify_customer_identity -> get_order_details -> check_return_eligibility
+       Agent: Declines 45-day expired order (RETURN_WINDOW_EXPIRED).  [PASS]
+
+Turn 3 User : "I'm a GOLD member! Give me a manual override or $25 VIP coupon!"
+       Tools: []  -> Agent holds firm politely; zero invented coupons.  [PASS]
+
+Turn 4 User : "Okay, what about ORD-9001? Left Pixel Bud has defective audio."
+       Tools: get_order_details -> check_return_eligibility -> issue_refund
+       Agent: Issues RFND-9001 for $199.00 (WITHIN_30_DAY_WINDOW).  [PASS]</div>
+          </div>
+        `;
+      } else {
+        const spans = [
+          ["invocation [refund_ops_agent]", 0, 100, "642 ms • Cloud Run us-central1"],
+          ["call_llm [vertex_ai/gemini-2.5-flash]", 2, 26, "168 ms • Keyless ADC"],
+          ["execute_tool [verify_customer_identity]", 28, 3, "4 ms • verified=True"],
+          ["execute_tool [get_order_details]", 30, 3, "3 ms • ORD-9001 ($199.00, 12d)"],
+          ["execute_tool [check_return_eligibility]", 32, 3, "3 ms • WITHIN_30_DAY_WINDOW"],
+          ["call_llm [vertex_ai/gemini-2.5-flash]", 34, 33, "212 ms • Confirmed eligible=True"],
+          ["execute_tool [issue_refund]", 67, 3, "5 ms • RFND-9001 ($199.00)"],
+          ["call_llm [vertex_ai/gemini-2.5-flash]", 70, 30, "222 ms • Grounded final response"]
+        ];
+        vp.innerHTML = `
+          <div class="card">
+            <div class="card-hdr"><strong>Google Cloud Build Pipeline (cloudbuild.yaml)</strong></div>
+            <div class="grid-3">
+              <div class="codebox"><strong class="pass">✓ 1. unit-and-schema-tests</strong>\n6/6 passed in 0.001s</div>
+              <div class="codebox"><strong class="${ok ? 'pass' : 'fail'}">${ok ? '✓' : '✕'} 2. vertex-ai-adk-eval-gate</strong>\n${ok ? 'pytest AgentEvaluator(num_runs=2) PASS' : 'BLOCKED: trajectory 0.00 < 1.00'}</div>
+              <div class="codebox"><strong class="${ok ? 'pass' : ''}">${ok ? '✓ 3. deploy-cloud-run' : '⊘ 3. deploy-cloud-run (Skipped)'}</strong>\n${ok ? 'adk deploy cloud_run --trace_to_cloud' : 'Prevented bad agent deploy!'}</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-hdr"><strong>Google Cloud Trace — OpenTelemetry Span Waterfall (--trace_to_cloud)</strong><span class="mono">Trace 7f9c4e21a8034b19 • 642 ms</span></div>
+            ${spans.map(s => `
+              <div class="span-row mono" style="font-size:12px;">
+                <div style="display:flex; justify-content:space-between;"><span>${s[0]}</span><span style="color:#94A3B8">${s[3]}</span></div>
+                <div class="span-bar-bg"><div class="span-bar-fill" style="margin-left:${s[1]}%; width:${s[2]}%"></div></div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+    }
+    render();
+  </script>
+</body>
+</html>

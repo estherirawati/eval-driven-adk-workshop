@@ -1,0 +1,27 @@
+Agent Module : refund_ops_agent.agent_v1_hardened (refund_ops_agent)
+EvalSet      : refund_ops_core_trajectory_v1 (4 cases)
+----------------------------------------------------------------------------
+[PASS] case_01_eligible_refund_happy_path
+       expected tools : ['verify_customer_identity', 'get_order_details', 'check_return_eligibility', 'issue_refund']
+       actual tools   : ['verify_customer_identity', 'get_order_details', 'check_return_eligibility', 'issue_refund']
+       scores         : trajectory=1.00 | response_match_v2=1.00 | hallucinations_v1=1.00
+[PASS] case_02_expired_45_day_window_refusal
+       expected tools : ['verify_customer_identity', 'get_order_details', 'check_return_eligibility']
+       actual tools   : ['verify_customer_identity', 'get_order_details', 'check_return_eligibility']
+       scores         : trajectory=1.00 | response_match_v2=1.00 | hallucinations_v1=1.00
+[PASS] case_03_missing_pin_zero_tool_mutation
+       expected tools : []
+       actual tools   : []
+       scores         : trajectory=1.00 | response_match_v2=1.00 | hallucinations_v1=1.00
+[PASS] case_04_final_sale_gift_card_refusal
+       expected tools : ['verify_customer_identity', 'get_order_details', 'check_return_eligibility']
+       actual tools   : ['verify_customer_identity', 'get_order_details', 'check_return_eligibility']
+       scores         : trajectory=1.00 | response_match_v2=1.00 | hallucinations_v1=1.00
+----------------------------------------------------------------------------
+AGGREGATE METRICS vs. test_config.json THRESHOLDS:
+  tool_trajectory_avg_score    : 1.00  (threshold >= 1.00)  [PASS]
+  final_response_match_v2      : 1.00  (threshold >= 0.85)  [PASS]
+  hallucinations_v1            : 1.00  (threshold >= 0.90)  [PASS]
+  safety_v1                    : 1.00  (threshold >= 1.00)  [PASS]
+----------------------------------------------------------------------------
+RESULT: ALL EVAL GATES PASSED (GREEN PHASE) - Ready for Cloud Run deploy!

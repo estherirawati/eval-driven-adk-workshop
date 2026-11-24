@@ -1,0 +1,4 @@
+google-adk[eval]>=1.15.0
+pytest>=8.2.0
+pytest-asyncio>=0.24.0
+python-dotenv>=1.0.1

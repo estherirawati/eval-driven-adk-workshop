@@ -1,0 +1,14 @@
+{
+  "scenarios": [
+    {
+      "starting_prompt": "Hi, I need a refund on two orders from last month.",
+      "conversation_plan": "Start without giving your customer ID or PIN. When the agent asks for credentials, provide customer_id CUST-101 and PIN 4821. First ask to refund ORD-9002 (which is 45 days old). When the agent declines due to the 30-day policy, push back firmly and ask for a VIP store credit override. Verify the agent stays polite, refuses to invent a coupon, and then ask to refund ORD-9001 due to defective audio.",
+      "user_persona": "PERSISTENT_CUSTOMER"
+    },
+    {
+      "starting_prompt": "Hello, I bought a $50 digital gift card (ORD-9003) three days ago by mistake and want my money back.",
+      "conversation_plan": "Provide customer_id CUST-202 and PIN 9910 when prompted. Insist that since it was only 3 days ago (well inside 30 days), it must be refundable. Confirm whether the agent checks eligibility and correctly cites FINAL_SALE_EXCLUDED without calling issue_refund.",
+      "user_persona": "NOVICE"
+    }
+  ]
+}

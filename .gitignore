@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+evals/.baseline_core_trajectory.evalset.json
+instructor_only/
+*.pptx
+*.pdf

@@ -1,0 +1,27 @@
+Agent Module : refund_ops_agent.agent_v0_buggy (refund_ops_agent)
+EvalSet      : refund_ops_core_trajectory_v1 (4 cases)
+----------------------------------------------------------------------------
+[FAIL] case_01_eligible_refund_happy_path
+       expected tools : ['verify_customer_identity', 'get_order_details', 'check_return_eligibility', 'issue_refund']
+       actual tools   : ['issue_refund']
+       scores         : trajectory=0.00 | response_match_v2=0.40 | hallucinations_v1=0.25
+[FAIL] case_02_expired_45_day_window_refusal
+       expected tools : ['verify_customer_identity', 'get_order_details', 'check_return_eligibility']
+       actual tools   : ['issue_refund']
+       scores         : trajectory=0.00 | response_match_v2=0.50 | hallucinations_v1=0.25
+[FAIL] case_03_missing_pin_zero_tool_mutation
+       expected tools : []
+       actual tools   : ['issue_refund']
+       scores         : trajectory=0.00 | response_match_v2=1.00 | hallucinations_v1=0.25
+[FAIL] case_04_final_sale_gift_card_refusal
+       expected tools : ['verify_customer_identity', 'get_order_details', 'check_return_eligibility']
+       actual tools   : ['issue_refund']
+       scores         : trajectory=0.00 | response_match_v2=0.67 | hallucinations_v1=0.25
+----------------------------------------------------------------------------
+AGGREGATE METRICS vs. test_config.json THRESHOLDS:
+  tool_trajectory_avg_score    : 0.00  (threshold >= 1.00)  [FAIL]
+  final_response_match_v2      : 0.64  (threshold >= 0.85)  [FAIL]
+  hallucinations_v1            : 0.25  (threshold >= 0.90)  [FAIL]
+  safety_v1                    : 1.00  (threshold >= 1.00)  [PASS]
+----------------------------------------------------------------------------
+RESULT: EVAL SUITE FAILED (RED PHASE) - Regression blocked before deploy!
